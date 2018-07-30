@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" id="html">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>自动旋转屏幕</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+        }
+        #rotateEle {
+            transition: all 1s;
+        }
+        .page {
+            width: 100%;
+            height: 100%;
+            background-color: rgb(126, 104, 104);
+        }
+    </style>
+</head>
+<body>
+    <div id="rotateEle">
+        <div class="page">
+
+        </div>
+    </div>
+</body>
+</style>
+
+<script>
+//使用方法：
+//将要旋转的元素添加ID'#rotateEle';
+//旋转的元素为body的全屏子元素，包裹着其他元素；
+
+
+//因为各大机型的微信状态栏的高度不一样，竖屏横屏时高度页不一样;
+//苹果6竖屏微信状态栏+手机状态栏高度64，横屏52px;
+//红米手机竖屏微信状态栏+手机状态栏高度68，横屏也是68px;
+//所以本例采用实时获取窗口尺寸来适应屏幕;
+
+function RotateHtml(cd) {
+    var HTML = document.getElementsByTagName('html')[0];
+    var BODY = document.getElementsByTagName('body')[0];
+    var rotateEle = document.getElementById('rotateEle');
+    HTML.style.cssText = 'position: relative;';
+    BODY.style.cssText = 'position: relative;';
+    rotateEle.style.cssText = 'position: relative; transform-origin:0 0;';
+
+
+    //旋转页面函数
+    //弃用CSS (orientation: portrait/landscape的原因：
+    // 安卓机启用键盘是页面window窗口尺寸有变化，CSS判断尺寸属于横屏，应用了横屏属性，而实际上屏幕是没有旋转的。
+    function rotatetDom() {
+        if (window.orientation === 180 || window.orientation === 0) {
+            //竖屏
+            rotateEle.style.transform = 'rotate(90deg) ';
+            rotateEle.style['-webkit-transform'] = 'rotate(90deg) ';
+            rotateEle.style.left = '100%';
+        }
+        if (window.orientation === 90 || window.orientation === -90) {
+            //     // '横屏状态！';
+            rotateEle.style.transform = 'rotate(0deg) ';
+            rotateEle.style['-webkit-transform'] = 'rotate(0deg) ';
+            rotateEle.style.left = '0px';
+        }
+    }
+    rotatetDom();
+
+
+    //设置竖屏时元素的宽高
+    function portrait() {
+        HTML.style.width = window.innerWidth + 'px';
+        HTML.style.height = window.innerHeight + 'px';
+        BODY.style.width = window.innerWidth + 'px';
+        BODY.style.height = window.innerHeight + 'px';
+        rotateEle.style.width = window.innerHeight + 'px';
+        rotateEle.style.height = window.innerWidth + 'px';
+    }
+
+    //设置横屏时元素的宽高
+    function landscape() {
+        HTML.style.width = window.innerWidth + 'px';
+        HTML.style.height = window.innerHeight + 'px';
+        BODY.style.width = window.innerWidth + 'px';
+        BODY.style.height = window.innerHeight + 'px';
+        rotateEle.style.width = window.innerWidth + 'px';
+        rotateEle.style.height = window.innerHeight + 'px';
+    }
+
+    function adoptScreen() {
+        if (window.orientation === 180 || window.orientation === 0) {
+            //竖屏
+            portrait();
+        }
+        if (window.orientation === 90 || window.orientation === -90) {
+            //     // '横屏状态！';
+            landscape();
+        }
+    }
+    adoptScreen();
+
+    window.addEventListener("onorientationchange" in window ? "orientationchange" : "resize", function () {
+
+        //手机在切换竖屏横屏时，有个感应时间，会导致窗口宽高更新延迟
+        //设置500毫秒延迟是为了捕获切换状态后的正确的window.innerHeight和window.innerWidth
+        //第一次一次适配，设置500毫秒延迟
+        //先调用adoptScreen()，再调用rotatetDom()，页面切换更加流畅
+        var timerTimeout = setTimeout(function () {
+            adoptScreen(); //设置元素的宽高
+            clearTimeout(timerTimeout);
+            rotatetDom(); //旋转rotateEle节点
+        }, 500);
+
+        //检查如果是否已适应，未适应时再执行一次适配
+        var timerInterval = setInterval(() => {
+            if (HTML.style.width !== (window.innerWidth + 'px')) {
+                adoptScreen();
+            } else {
+                cd && cd();
+                clearInterval(timerInterval);
+            }
+        }, 1000);
+    })
+}
+
+function callback() {
+    console.log('回调函数')
+}
+
+RotateHtml(callback);
+</script>
+</html>
